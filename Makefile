@@ -5,3 +5,7 @@ MODEL ?= oracle
 install:
 	pip install -e ".[dev]"
 
+test:
+	pytest
+
+lint:
