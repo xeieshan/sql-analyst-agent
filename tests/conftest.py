@@ -24,3 +24,18 @@ def db_path(tmp_path: Path) -> Path:
     conn.close()
     return path
 
+
+@pytest.fixture()
+def scripted():
+    """scripted([resp1, resp2, ...]) -> completion_fn returning them in order and recording calls."""
+
+    def factory(responses):
+        queue = list(responses)
+        calls = []
+
+        def fn(**kwargs):
+            calls.append({**kwargs, "messages": list(kwargs.get("messages", []))})
+            item = queue.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
