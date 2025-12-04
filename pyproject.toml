@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sql-analyst-agent"
+version = "0.1.0"
+description = "A tool-using LLM agent that answers business questions over SQLite, with an execution-accuracy eval harness"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
