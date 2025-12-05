@@ -39,3 +39,8 @@ def scripted():
             if isinstance(item, Exception):
                 raise item
             return item
+
+        fn.calls = calls
+        return fn
+
+    return factory
