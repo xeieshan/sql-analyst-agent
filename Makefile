@@ -9,3 +9,9 @@ test:
 	pytest
 
 lint:
+	ruff check .
+	ruff format --check .
+
+data:
+	sql-agent download
+
