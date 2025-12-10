@@ -54,3 +54,39 @@ def test_run_query_truncates(db_path):
     assert "truncated" in res.to_text()
 
 
+def test_query_timeout(db_path):
+    db = ReadOnlyDB(db_path, timeout_s=0.2)
+    endless = "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r) SELECT COUNT(*) FROM r"
+    with pytest.raises(TimeoutError):
+        db.run_query(endless)
+    # the connection still works afterwards
+    assert db.run_query("SELECT COUNT(*) FROM Artist").rows == [(3,)]
+
+
+def test_describe_table(db_path):
+    text = ReadOnlyDB(db_path).describe_table("Album")
+    assert "AlbumId INTEGER PRIMARY KEY" in text
+    assert "FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)" in text
+    assert "Balls to the Wall" in text
+
+
+def test_describe_unknown_table(db_path):
+    with pytest.raises(ValueError, match="Unknown table"):
+        ReadOnlyDB(db_path).describe_table("Nope")
+
+
+def test_tool_specs_are_consistent():
+    assert TOOL_NAMES == {"list_tables", "describe_table", "run_sql", "submit_answer"}
+    for spec in TOOL_SPECS:
+        assert spec["type"] == "function"
+        assert spec["function"]["parameters"]["type"] == "object"
+
+
+def test_toolbox_dispatch(db_path):
+    tb = ToolBox(ReadOnlyDB(db_path))
+    assert tb.call("list_tables", "{}").content == "Album, Artist"
+    out = tb.call("run_sql", '{"query": "SELECT COUNT(*) AS n FROM Album"}')
+    assert not out.is_error and "n\n3" in out.content
+    final = tb.call("submit_answer", {"sql": "SELECT 1", "answer": "one"})
+    assert final.final == {"sql": "SELECT 1", "answer": "one"}
+
