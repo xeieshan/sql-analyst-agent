@@ -15,3 +15,8 @@ lint:
 data:
 	sql-agent download
 
+eval:
+	sql-agent eval --model $(MODEL)
+
+report:
+	sql-agent report
