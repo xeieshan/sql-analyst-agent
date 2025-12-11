@@ -28,3 +28,38 @@ CHINOOK_SHA256 = "7651ba378ac2fcd0dfc3c66fb101f7a7eed3ba39a612ec642b96e20702061f
 _FORBIDDEN = (
     exp.Insert,
     exp.Update,
+    exp.Delete,
+    exp.Drop,
+    exp.Create,
+    exp.Alter,
+    exp.Command,
+    exp.Pragma,
+    exp.Attach,
+    exp.Detach,
+    exp.Transaction,
+)
+
+
+class UnsafeQueryError(ValueError):
+    """Raised when a query is not a single read-only SELECT."""
+
+
+@dataclass
+class QueryResult:
+    columns: list[str]
+    rows: list[tuple]
+    truncated: bool
+    elapsed_s: float
+
+    def to_text(self, max_rows: int = 20) -> str:
+        if not self.columns:
+            return "(no columns)"
+        lines = [" | ".join(self.columns)]
+        for row in self.rows[:max_rows]:
+            lines.append(" | ".join("NULL" if v is None else str(v) for v in row))
+        shown = min(len(self.rows), max_rows)
+        more = len(self.rows) - shown
+        footer = f"({len(self.rows)} rows{', truncated' if self.truncated else ''})"
+        if more > 0:
+            footer = f"({shown} of {len(self.rows)} rows shown{', more truncated' if self.truncated else ''})"
+        return "\n".join(lines + [footer])
