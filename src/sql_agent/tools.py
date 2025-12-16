@@ -73,3 +73,34 @@ class ToolBox:
     def __init__(self, db: ReadOnlyDB, max_output_chars: int = 4000) -> None:
         self.db = db
         self.max_output_chars = max_output_chars
+
+    def _clip(self, text: str) -> str:
+        if len(text) <= self.max_output_chars:
+            return text
+        return text[: self.max_output_chars] + "\n... [output clipped]"
+
+    def call(self, name: str, raw_args: str | dict | None) -> ToolOutcome:
+        if name not in TOOL_NAMES:
+            return ToolOutcome(f"Error: unknown tool {name!r}. Available: {sorted(TOOL_NAMES)}", is_error=True)
+        try:
+            args = json.loads(raw_args) if isinstance(raw_args, str) and raw_args.strip() else (raw_args or {})
+        except json.JSONDecodeError as err:
+            return ToolOutcome(f"Error: arguments are not valid JSON ({err})", is_error=True)
+        if not isinstance(args, dict):
+            return ToolOutcome("Error: arguments must be a JSON object", is_error=True)
+
+        try:
+            if name == "list_tables":
+                return ToolOutcome(", ".join(self.db.list_tables()))
+            if name == "describe_table":
+                return ToolOutcome(self._clip(self.db.describe_table(str(args["table"]))))
+            if name == "run_sql":
+                return ToolOutcome(self._clip(self.db.run_query(str(args["query"])).to_text()))
+            # submit_answer: check that the SQL runs before accepting it.
+            sql = str(args["sql"])
+            self.db.run_query(sql)
+            return ToolOutcome("Answer submitted.", final={"sql": sql, "answer": str(args.get("answer", ""))})
+        except KeyError as err:
+            return ToolOutcome(f"Error: missing argument {err}", is_error=True)
+        except (UnsafeQueryError, ValueError, TimeoutError, sqlite3.Error) as err:
+            return ToolOutcome(f"Error: {err}", is_error=True)
