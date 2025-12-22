@@ -90,3 +90,28 @@ def test_toolbox_dispatch(db_path):
     final = tb.call("submit_answer", {"sql": "SELECT 1", "answer": "one"})
     assert final.final == {"sql": "SELECT 1", "answer": "one"}
 
+
+@pytest.mark.parametrize(
+    "name,args,expected",
+    [
+        ("drop_everything", "{}", "unknown tool"),
+        ("run_sql", "{not json", "not valid JSON"),
+        ("run_sql", "[1, 2]", "must be a JSON object"),
+        ("run_sql", "{}", "missing argument"),
+        ("run_sql", '{"query": "DELETE FROM Artist"}', "Only SELECT"),
+        ("run_sql", '{"query": "SELECT nope FROM Artist"}', "no such column"),
+        ("describe_table", '{"table": "Nope"}', "Unknown table"),
+        ("submit_answer", '{"sql": "SELECT * FROM Missing", "answer": "x"}', "no such table"),
+    ],
+)
+def test_toolbox_errors_are_returned_not_raised(db_path, name, args, expected):
+    out = ToolBox(ReadOnlyDB(db_path)).call(name, args)
+    assert out.is_error
+    assert expected in out.content
+    assert out.final is None
+
+
+def test_toolbox_clips_long_output(db_path):
+    tb = ToolBox(ReadOnlyDB(db_path), max_output_chars=30)
+    out = tb.call("describe_table", '{"table": "Album"}')
+    assert out.content.endswith("[output clipped]")
