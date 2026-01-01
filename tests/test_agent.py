@@ -43,3 +43,27 @@ def test_recovers_from_tool_error(db_path, scripted):
     assert "no such table" in fn.calls[1]["messages"][-1]["content"]
 
 
+def test_parallel_tool_calls_in_one_turn(db_path, scripted):
+    fn = scripted(
+        [
+            response(tool_calls=[tool_call("a", "describe_table", table="Album"), tool_call("b", "list_tables")]),
+            response(tool_calls=[tool_call("c", "submit_answer", sql="SELECT 1", answer="x")]),
+        ]
+    )
+    traj = make_agent(db_path, fn).run("q")
+    assert traj.llm_calls == 2
+    assert len(traj.steps) == 3
+    assert traj.prompt_tokens == 200  # usage counted once per model turn
+
+
+def test_nudges_once_then_gives_up(db_path, scripted):
+    fn = scripted([response(content="I think it's 3."), response(content="Still 3.")])
+    traj = make_agent(db_path, fn).run("q")
+    assert traj.stop_reason == "no_submission"
+    assert fn.calls[1]["messages"][-1]["role"] == "user"
+
+
+def test_nudge_then_submit(db_path, scripted):
+    fn = scripted(
+        [
+            response(content="Let me think."),
