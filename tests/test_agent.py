@@ -67,3 +67,33 @@ def test_nudge_then_submit(db_path, scripted):
     fn = scripted(
         [
             response(content="Let me think."),
+            response(tool_calls=[tool_call("1", "submit_answer", sql="SELECT 1", answer="x")]),
+        ]
+    )
+    assert make_agent(db_path, fn).run("q").stop_reason == "submitted"
+
+
+def test_invalid_submission_is_not_accepted(db_path, scripted):
+    fn = scripted(
+        [
+            response(tool_calls=[tool_call("1", "submit_answer", sql="DROP TABLE Album", answer="x")]),
+            response(tool_calls=[tool_call("2", "submit_answer", sql="SELECT 1", answer="x")]),
+        ]
+    )
+    traj = make_agent(db_path, fn).run("q")
+    assert traj.final_sql == "SELECT 1"
+    assert traj.tool_errors == 1
+
+
+def test_max_steps(db_path, scripted):
+    fn = scripted([response(tool_calls=[tool_call(str(i), "list_tables")]) for i in range(3)])
+    traj = make_agent(db_path, fn, max_steps=3).run("q")
+    assert traj.stop_reason == "max_steps"
+    assert traj.final_sql is None
+
+
+def test_llm_error_is_recorded(db_path, scripted):
+    traj = make_agent(db_path, scripted([RuntimeError("rate limited")])).run("q")
+    assert traj.stop_reason == "llm_error"
+    assert "rate limited" in traj.steps[0].output
+
