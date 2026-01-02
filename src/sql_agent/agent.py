@@ -111,3 +111,59 @@ def _assistant_message(msg: Any) -> dict[str, Any]:
             }
             for tc in msg.tool_calls
         ]
+    return out
+
+
+class SQLAgent:
+    def __init__(
+        self,
+        toolbox: ToolBox,
+        model: str,
+        max_steps: int = 12,
+        completion_fn: CompletionFn | None = None,
+        temperature: float = 0.0,
+    ) -> None:
+        self.toolbox = toolbox
+        self.model = model
+        self.max_steps = max_steps
+        self.completion_fn = completion_fn or _default_completion
+        self.temperature = temperature
+
+    def run(self, question: str) -> Trajectory:
+        traj = Trajectory(question=question, model=self.model)
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": question},
+        ]
+        nudged = False
+        start = time.perf_counter()
+        for i in range(self.max_steps):
+            t0 = time.perf_counter()
+            try:
+                resp = self.completion_fn(
+                    model=self.model,
+                    messages=messages,
+                    tools=TOOL_SPECS,
+                    tool_choice="auto",
+                    temperature=self.temperature,
+                    max_tokens=1024,
+                )
+            except Exception as err:  # noqa: BLE001 - provider errors vary
+                traj.steps.append(Step(i, None, None, f"LLM error: {err}", is_error=True))
+                traj.stop_reason = "llm_error"
+                break
+            latency = time.perf_counter() - t0
+            usage = getattr(resp, "usage", None)
+            meta = {
+                "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
+                "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
+                "cost_usd": _cost(resp),
+                "latency_s": latency,
+            }
+            msg = resp.choices[0].message
+            messages.append(_assistant_message(msg))
+            tool_calls = getattr(msg, "tool_calls", None) or []
+
+            if not tool_calls:
+                traj.steps.append(Step(i, None, None, None, assistant_text=msg.content, **meta))
+                if nudged:
