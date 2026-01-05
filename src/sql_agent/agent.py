@@ -167,3 +167,34 @@ class SQLAgent:
             if not tool_calls:
                 traj.steps.append(Step(i, None, None, None, assistant_text=msg.content, **meta))
                 if nudged:
+                    traj.stop_reason = "no_submission"
+                    break
+                nudged = True
+                messages.append({"role": "user", "content": NUDGE})
+                continue
+
+            for j, tc in enumerate(tool_calls):
+                outcome = self.toolbox.call(tc.function.name, tc.function.arguments)
+                step_meta = meta if j == 0 else {}  # attribute usage to the first call of the turn
+                traj.steps.append(
+                    Step(
+                        i,
+                        tc.function.name,
+                        tc.function.arguments,
+                        outcome.content,
+                        outcome.is_error,
+                        assistant_text=msg.content if j == 0 else None,
+                        **step_meta,
+                    )
+                )
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": outcome.content})
+                if outcome.final:
+                    traj.final_sql = outcome.final["sql"]
+                    traj.final_answer = outcome.final["answer"]
+            if traj.final_sql is not None:
+                traj.stop_reason = "submitted"
+                break
+        else:
+            traj.stop_reason = "max_steps"
+        traj.wall_time_s = time.perf_counter() - start
+        return traj
