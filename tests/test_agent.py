@@ -97,3 +97,10 @@ def test_llm_error_is_recorded(db_path, scripted):
     assert traj.stop_reason == "llm_error"
     assert "rate limited" in traj.steps[0].output
 
+
+def test_trajectory_serializes(db_path, scripted):
+    fn = scripted([response(tool_calls=[tool_call("1", "submit_answer", sql="SELECT 1", answer="x")])])
+    d = make_agent(db_path, fn).run("q").to_dict()
+    assert d["stop_reason"] == "submitted"
+    assert d["llm_calls"] == 1
+    assert d["steps"][0]["tool"] == "submit_answer"
