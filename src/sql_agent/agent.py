@@ -199,4 +199,4 @@ class SQLAgent:
         traj.wall_time_s = time.perf_counter() - start
         return traj
 
-# Maintenance pass: 2026-01-07 13:57
+# Maintenance pass: 2026-01-08 11:40
