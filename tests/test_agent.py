@@ -105,4 +105,4 @@ def test_trajectory_serializes(db_path, scripted):
     assert d["llm_calls"] == 1
     assert d["steps"][0]["tool"] == "submit_answer"
 
-# Maintenance pass: 2026-01-08 09:00
+# Maintenance pass: 2026-01-14 17:56
