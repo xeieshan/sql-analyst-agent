@@ -116,4 +116,4 @@ def test_toolbox_clips_long_output(db_path):
     out = tb.call("describe_table", '{"table": "Album"}')
     assert out.content.endswith("[output clipped]")
 
-# Maintenance pass: 2026-01-19 17:25
+# Maintenance pass: 2026-01-29 10:49
