@@ -1,4 +1,3 @@
 """A tool-using SQL analyst agent with an execution-accuracy evaluation harness."""
 
-
-# Refined: 202512241526
+__version__ = "0.1.0"
