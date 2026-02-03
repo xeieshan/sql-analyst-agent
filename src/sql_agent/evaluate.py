@@ -69,3 +69,57 @@ def results_match(gold: list[tuple], pred: list[tuple], order_matters: bool) -> 
         return True
     n_gold, n_pred = len(gold[0]), len(pred[0])
     if n_pred < n_gold:
+        return False
+
+    gold_cols = [sorted(_column(gold, j), key=_key) for j in range(n_gold)]
+    pred_cols = [sorted(_column(pred, j), key=_key) for j in range(n_pred)]
+    candidates = [[p for p in range(n_pred) if pred_cols[p] == gold_cols[g]] for g in range(n_gold)]
+
+    def check(mapping: list[int]) -> bool:
+        projected = [tuple(r[p] for p in mapping) for r in pred]
+        if order_matters:
+            return projected == gold
+        return Counter(projected) == Counter(gold)
+
+    def search(g: int, used: set[int], mapping: list[int]) -> bool:
+        if g == n_gold:
+            return check(mapping)
+        for p in candidates[g]:
+            if p not in used and search(g + 1, used | {p}, mapping + [p]):
+                return True
+        return False
+
+    return search(0, set(), [])
+
+
+def grade(db: ReadOnlyDB, q: Question, traj: Trajectory) -> dict:
+    record = {
+        "id": q.qid,
+        "difficulty": q.difficulty,
+        "stop_reason": traj.stop_reason,
+        "final_sql": traj.final_sql,
+        "correct": False,
+        "error": None,
+    }
+    if traj.final_sql is None:
+        record["error"] = f"no final SQL ({traj.stop_reason})"
+        return record
+    gold_rows = db.run_unbounded(q.gold_sql)
+    try:
+        pred_rows = db.run_unbounded(traj.final_sql)
+    except Exception as err:  # noqa: BLE001 - any failure of the predicted SQL is a wrong answer
+        record["error"] = f"final SQL failed: {err}"
+        return record
+    record["correct"] = results_match(gold_rows, pred_rows, q.order_matters)
+    if not record["correct"]:
+        record["error"] = "result mismatch"
+    return record
+
+
+def make_oracle(questions: Iterable[Question]) -> Callable[..., Any]:
+    """A fake model that inspects the schema once, then submits the gold SQL.
+
+    Running the harness with it must give 100% accuracy; anything less is a harness bug.
+    """
+    gold = {q.question: q.gold_sql for q in questions}
+
