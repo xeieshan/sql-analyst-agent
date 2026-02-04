@@ -123,3 +123,66 @@ def make_oracle(questions: Iterable[Question]) -> Callable[..., Any]:
     """
     gold = {q.question: q.gold_sql for q in questions}
 
+    def call(id_: str, name: str, args: dict) -> SimpleNamespace:
+        return SimpleNamespace(id=id_, function=SimpleNamespace(name=name, arguments=json.dumps(args)))
+
+    def completion(**kwargs: Any) -> SimpleNamespace:
+        messages = kwargs["messages"]
+        question = messages[1]["content"]
+        n_tool_msgs = sum(1 for m in messages if m["role"] == "tool")
+        if n_tool_msgs == 0:
+            calls = [call("c1", "list_tables", {})]
+        else:
+            calls = [call("c2", "submit_answer", {"sql": gold[question], "answer": "oracle"})]
+        msg = SimpleNamespace(content=None, tool_calls=calls)
+        usage = SimpleNamespace(prompt_tokens=0, completion_tokens=0)
+        return SimpleNamespace(choices=[SimpleNamespace(message=msg)], usage=usage)
+
+    return completion
+
+
+def _pct(values: list[float], q: float) -> float:
+    if not values:
+        return 0.0
+    if len(values) == 1:
+        return values[0]
+    return statistics.quantiles(values, n=100, method="inclusive")[int(q) - 1]
+
+
+def summarize(records: list[dict], trajectories: list[Trajectory]) -> dict:
+    n = len(records)
+    by_diff: dict[str, list[bool]] = {}
+    for r in records:
+        by_diff.setdefault(r["difficulty"], []).append(r["correct"])
+    walls = [t.wall_time_s for t in trajectories]
+    return {
+        "n": n,
+        "execution_accuracy": sum(r["correct"] for r in records) / n,
+        "by_difficulty": {d: round(sum(v) / len(v), 3) for d, v in sorted(by_diff.items())},
+        "submitted_rate": sum(t.final_sql is not None for t in trajectories) / n,
+        "mean_llm_calls": statistics.mean(t.llm_calls for t in trajectories),
+        "mean_tool_errors": statistics.mean(t.tool_errors for t in trajectories),
+        "total_prompt_tokens": sum(t.prompt_tokens for t in trajectories),
+        "total_completion_tokens": sum(t.completion_tokens for t in trajectories),
+        "total_cost_usd": round(sum(t.cost_usd for t in trajectories), 4),
+        "latency_p50_s": round(_pct(walls, 50), 2),
+        "latency_p95_s": round(_pct(walls, 95), 2),
+        "failures": dict(Counter(r["error"].split(":")[0] for r in records if r["error"])),
+    }
+
+
+def run_eval(
+    db_path: str | Path,
+    questions: list[Question],
+    model: str,
+    completion_fn: Callable[..., Any] | None = None,
+    max_steps: int = 12,
+    trajectory_path: str | Path | None = None,
+) -> dict:
+    db = ReadOnlyDB(db_path)
+    agent = SQLAgent(ToolBox(db), model=model, max_steps=max_steps, completion_fn=completion_fn)
+    records, trajs = [], []
+    traj_file = None
+    if trajectory_path:
+        Path(trajectory_path).parent.mkdir(parents=True, exist_ok=True)
+        traj_file = Path(trajectory_path).open("w", encoding="utf-8")
