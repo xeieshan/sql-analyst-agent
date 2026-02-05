@@ -186,3 +186,16 @@ def run_eval(
     if trajectory_path:
         Path(trajectory_path).parent.mkdir(parents=True, exist_ok=True)
         traj_file = Path(trajectory_path).open("w", encoding="utf-8")
+    try:
+        for q in questions:
+            traj = agent.run(q.question)
+            rec = grade(db, q, traj)
+            records.append(rec)
+            trajs.append(traj)
+            if traj_file:
+                traj_file.write(json.dumps({"id": q.qid, "grade": rec, "trajectory": traj.to_dict()}) + "\n")
+    finally:
+        if traj_file:
+            traj_file.close()
+        db.close()
+    return {"model": model, "summary": summarize(records, trajs), "per_question": records}
