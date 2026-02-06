@@ -111,3 +111,46 @@ class ReadOnlyDB:
         rows = self.conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
         )
+        return [r[0] for r in rows]
+
+    def describe_table(self, table: str, sample_rows: int = 3) -> str:
+        if table not in self.list_tables():
+            raise ValueError(f"Unknown table: {table!r}. Tables: {', '.join(self.list_tables())}")
+        cols = self.conn.execute(f'PRAGMA table_info("{table}")').fetchall()
+        fks = self.conn.execute(f'PRAGMA foreign_key_list("{table}")').fetchall()
+        lines = [f"Table {table}:"]
+        for _, name, ctype, notnull, _, pk in cols:
+            flags = [f for f, on in (("PRIMARY KEY", pk), ("NOT NULL", notnull)) if on]
+            lines.append(f"  {name} {ctype} {' '.join(flags)}".rstrip())
+        for fk in fks:
+            lines.append(f"  FOREIGN KEY ({fk[3]}) REFERENCES {fk[2]}({fk[4]})")
+        sample = self.run_query(f'SELECT * FROM "{table}" LIMIT {int(sample_rows)}')
+        lines.append("Sample rows:")
+        lines.append(sample.to_text())
+        return "\n".join(lines)
+
+    def _execute(self, sql: str, limit: int | None) -> tuple[list[str], list[tuple], float]:
+        sql = validate_select(sql)
+        deadline = time.monotonic() + self.timeout_s
+        self.conn.set_progress_handler(lambda: int(time.monotonic() > deadline), 10_000)
+        start = time.perf_counter()
+        try:
+            cur = self.conn.execute(sql)
+            rows = cur.fetchall() if limit is None else cur.fetchmany(limit)
+        except sqlite3.OperationalError as err:
+            if "interrupted" in str(err):
+                raise TimeoutError(f"Query exceeded {self.timeout_s}s") from err
+            raise
+        finally:
+            self.conn.set_progress_handler(None, 0)
+        columns = [d[0] for d in cur.description or []]
+        return columns, [tuple(r) for r in rows], time.perf_counter() - start
+
+    def run_query(self, sql: str) -> QueryResult:
+        columns, rows, elapsed = self._execute(sql, limit=self.max_rows + 1)
+        truncated = len(rows) > self.max_rows
+        return QueryResult(columns, rows[: self.max_rows], truncated, elapsed)
+
+    def run_unbounded(self, sql: str) -> list[tuple]:
+        """Fetch every row (used for grading); still validated and time-limited."""
+        return self._execute(sql, limit=None)[1]
