@@ -200,4 +200,4 @@ def run_eval(
         db.close()
     return {"model": model, "summary": summarize(records, trajs), "per_question": records}
 
-# Maintenance pass: 2026-02-10 09:16
+# Maintenance pass: 2026-02-11 15:17
