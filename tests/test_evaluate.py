@@ -48,3 +48,37 @@ def test_oracle_scores_100_percent_on_fixture(db_path, tmp_path):
     lines = (tmp_path / "t.jsonl").read_text().splitlines()
     assert json.loads(lines[0])["grade"]["correct"] is True
 
+
+def test_wrong_and_missing_answers_are_graded(db_path, scripted):
+    qs = [
+        Question("q1", "How many artists?", "SELECT COUNT(*) FROM Artist", "easy", False),
+        Question("q2", "How many albums?", "SELECT COUNT(*) FROM Album", "easy", False),
+    ]
+    fn = scripted(
+        [
+            response(
+                tool_calls=[
+                    tool_call("1", "submit_answer", sql="SELECT COUNT(*) FROM Album WHERE ArtistId = 1", answer="2")
+                ]
+            ),
+            response(content="no idea"),
+            response(content="still no idea"),
+        ]
+    )
+    res = run_eval(db_path, qs, model="m", completion_fn=fn)
+    recs = res["per_question"]
+    assert recs[0]["correct"] is False and recs[0]["error"] == "result mismatch"
+    assert recs[1]["error"].startswith("no final SQL")
+    assert res["summary"]["execution_accuracy"] == 0.0
+    assert res["summary"]["failures"] == {"result mismatch": 1, "no final SQL (no_submission)": 1}
+
+
+def test_question_file_is_well_formed():
+    qs = load_questions("data/questions.jsonl")
+    assert len(qs) == 30
+    assert len({q.qid for q in qs}) == 30
+    assert {q.difficulty for q in qs} == {"easy", "medium", "hard"}
+
+
+@pytest.mark.skipif(not CHINOOK.exists(), reason="run `sql-agent download` first")
+def test_all_gold_queries_run_and_return_rows():
