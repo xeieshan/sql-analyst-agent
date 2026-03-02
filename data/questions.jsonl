@@ -1,0 +1,7 @@
+{"id": "e01", "difficulty": "easy", "order_matters": false, "question": "How many customers are there?", "gold_sql": "SELECT COUNT(*) FROM Customer"}
+{"id": "e02", "difficulty": "easy", "order_matters": false, "question": "How many tracks belong to the Rock genre?", "gold_sql": "SELECT COUNT(*) FROM Track t JOIN Genre g ON t.GenreId = g.GenreId WHERE g.Name = 'Rock'"}
+{"id": "e03", "difficulty": "easy", "order_matters": false, "question": "List every distinct country our customers live in (one column: country).", "gold_sql": "SELECT DISTINCT Country FROM Customer"}
+{"id": "e04", "difficulty": "easy", "order_matters": false, "question": "What is the total revenue across all invoices, rounded to 2 decimal places?", "gold_sql": "SELECT ROUND(SUM(Total), 2) FROM Invoice"}
+{"id": "e05", "difficulty": "easy", "order_matters": false, "question": "How many albums by the artist AC/DC are in the catalog?", "gold_sql": "SELECT COUNT(*) FROM Album al JOIN Artist ar ON al.ArtistId = ar.ArtistId WHERE ar.Name = 'AC/DC'"}
+{"id": "e06", "difficulty": "easy", "order_matters": false, "question": "What is the name of the longest track?", "gold_sql": "SELECT Name FROM Track ORDER BY Milliseconds DESC LIMIT 1"}
+{"id": "e07", "difficulty": "easy", "order_matters": false, "question": "How many employees does the company have?", "gold_sql": "SELECT COUNT(*) FROM Employee"}
