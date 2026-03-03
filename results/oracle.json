@@ -81,3 +81,49 @@
       "stop_reason": "submitted",
       "final_sql": "SELECT ROUND(AVG(UnitPrice), 2) FROM Track",
       "correct": true,
+      "error": null
+    },
+    {
+      "id": "e09",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(*) FROM Invoice WHERE BillingCountry = 'Germany'",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e10",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(DISTINCT Country) FROM Customer",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m01",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT ar.Name, COUNT(*) AS n FROM Track t JOIN Album al ON t.AlbumId = al.AlbumId JOIN Artist ar ON al.ArtistId = ar.ArtistId GROUP BY ar.ArtistId ORDER BY n DESC LIMIT 4",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m02",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT BillingCountry, ROUND(SUM(Total), 2) AS revenue FROM Invoice GROUP BY BillingCountry ORDER BY revenue DESC LIMIT 5",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m03",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT c.FirstName || ' ' || c.LastName, ROUND(SUM(i.Total), 2) AS spent FROM Customer c JOIN Invoice i ON i.CustomerId = c.CustomerId GROUP BY c.CustomerId ORDER BY spent DESC LIMIT 1",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m04",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
