@@ -1,0 +1,83 @@
+{
+  "model": "oracle",
+  "summary": {
+    "n": 30,
+    "execution_accuracy": 1.0,
+    "by_difficulty": {
+      "easy": 1.0,
+      "hard": 1.0,
+      "medium": 1.0
+    },
+    "submitted_rate": 1.0,
+    "mean_llm_calls": 2,
+    "mean_tool_errors": 0,
+    "total_prompt_tokens": 0,
+    "total_completion_tokens": 0,
+    "total_cost_usd": 0.0,
+    "latency_p50_s": 0.0,
+    "latency_p95_s": 0.0,
+    "failures": {}
+  },
+  "per_question": [
+    {
+      "id": "e01",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(*) FROM Customer",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e02",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(*) FROM Track t JOIN Genre g ON t.GenreId = g.GenreId WHERE g.Name = 'Rock'",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e03",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT DISTINCT Country FROM Customer",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e04",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT ROUND(SUM(Total), 2) FROM Invoice",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e05",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(*) FROM Album al JOIN Artist ar ON al.ArtistId = ar.ArtistId WHERE ar.Name = 'AC/DC'",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e06",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT Name FROM Track ORDER BY Milliseconds DESC LIMIT 1",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e07",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(*) FROM Employee",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "e08",
+      "difficulty": "easy",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT ROUND(AVG(UnitPrice), 2) FROM Track",
+      "correct": true,
