@@ -127,3 +127,67 @@
       "id": "m04",
       "difficulty": "medium",
       "stop_reason": "submitted",
+      "final_sql": "SELECT g.Name, ROUND(SUM(il.UnitPrice * il.Quantity), 2) AS revenue FROM InvoiceLine il JOIN Track t ON il.TrackId = t.TrackId JOIN Genre g ON g.GenreId = t.GenreId GROUP BY g.GenreId ORDER BY revenue DESC LIMIT 1",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m05",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT strftime('%Y', InvoiceDate) AS year, ROUND(SUM(Total), 2) FROM Invoice GROUP BY year ORDER BY year",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m06",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT e.FirstName || ' ' || e.LastName, ROUND(SUM(i.Total), 2) AS total FROM Employee e JOIN Customer c ON c.SupportRepId = e.EmployeeId JOIN Invoice i ON i.CustomerId = c.CustomerId GROUP BY e.EmployeeId ORDER BY total DESC LIMIT 1",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m07",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT g.Name, ROUND(AVG(t.Milliseconds) / 60000.0, 2) AS minutes FROM Track t JOIN Genre g ON g.GenreId = t.GenreId GROUP BY g.GenreId ORDER BY minutes DESC LIMIT 3",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m08",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT e.FirstName || ' ' || e.LastName, COUNT(*) FROM Employee e JOIN Customer c ON c.SupportRepId = e.EmployeeId GROUP BY e.EmployeeId",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m09",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT al.Title FROM Album al JOIN Track t ON t.AlbumId = al.AlbumId GROUP BY al.AlbumId HAVING COUNT(*) > 20",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m10",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT strftime('%Y-%m', InvoiceDate) AS month, ROUND(SUM(Total), 2) AS revenue FROM Invoice GROUP BY month ORDER BY revenue DESC LIMIT 3",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m11",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT g.Name, SUM(il.Quantity) AS units FROM InvoiceLine il JOIN Invoice i ON i.InvoiceId = il.InvoiceId JOIN Track t ON t.TrackId = il.TrackId JOIN Genre g ON g.GenreId = t.GenreId WHERE i.BillingCountry = 'USA' GROUP BY g.GenreId ORDER BY units DESC LIMIT 1",
+      "correct": true,
+      "error": null
+    },
+    {
+      "id": "m12",
+      "difficulty": "medium",
+      "stop_reason": "submitted",
