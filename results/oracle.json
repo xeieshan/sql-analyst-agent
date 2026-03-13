@@ -252,3 +252,12 @@
       "error": null
     },
     {
+      "id": "h08",
+      "difficulty": "hard",
+      "stop_reason": "submitted",
+      "final_sql": "SELECT COUNT(*) FROM (SELECT CustomerId FROM Invoice GROUP BY CustomerId HAVING COUNT(DISTINCT strftime('%Y', InvoiceDate)) = (SELECT COUNT(DISTINCT strftime('%Y', InvoiceDate)) FROM Invoice))",
+      "correct": true,
+      "error": null
+    }
+  ]
+}
