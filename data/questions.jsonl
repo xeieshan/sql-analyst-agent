@@ -28,5 +28,3 @@
 {"id": "h06", "difficulty": "hard", "order_matters": true, "question": "Which 3 artists earned the most revenue from track sales? Return artist name and revenue rounded to 2 decimals, highest first.", "gold_sql": "SELECT ar.Name, ROUND(SUM(il.UnitPrice * il.Quantity), 2) AS revenue FROM InvoiceLine il JOIN Track t ON t.TrackId = il.TrackId JOIN Album al ON al.AlbumId = t.AlbumId JOIN Artist ar ON ar.ArtistId = al.ArtistId GROUP BY ar.ArtistId ORDER BY revenue DESC LIMIT 3"}
 {"id": "h07", "difficulty": "hard", "order_matters": false, "question": "How many artists have no albums in the catalog?", "gold_sql": "SELECT COUNT(*) FROM Artist ar WHERE NOT EXISTS (SELECT 1 FROM Album al WHERE al.ArtistId = ar.ArtistId)"}
 {"id": "h08", "difficulty": "hard", "order_matters": false, "question": "How many customers made at least one purchase in every calendar year that appears in the invoice data?", "gold_sql": "SELECT COUNT(*) FROM (SELECT CustomerId FROM Invoice GROUP BY CustomerId HAVING COUNT(DISTINCT strftime('%Y', InvoiceDate)) = (SELECT COUNT(DISTINCT strftime('%Y', InvoiceDate)) FROM Invoice))"}
-
-# Refined: 202603181607
