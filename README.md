@@ -30,3 +30,30 @@ sequenceDiagram
     end
     M->>T: submit_answer(sql, answer)
     T->>D: final SQL must run before it is accepted
+```
+
+- **Four tools**: `list_tables`, `describe_table` (columns, keys, foreign keys, 3 sample rows), `run_sql` (up to 20 rows), and `submit_answer`.
+- **Errors go back to the model as text** and never crash the loop, so the model can fix a misspelled column and try again. Tool errors per question is a tracked metric.
+- **Stop conditions are explicit**: `submitted`, `max_steps`, `no_submission` (the model answered in prose twice, even after one nudge), and `llm_error`.
+- **No agent framework.** The loop is under 70 lines on LiteLLM's OpenAI-style tool calling, so every message is visible and testable.
+
+### Safety
+
+The SQL comes from a model, so it is treated as untrusted:
+
+1. sqlglot must parse it as exactly **one** `SELECT` / `WITH` / `UNION` query. `DELETE`, `PRAGMA`, `ATTACH` and stacked statements like `SELECT 1; DROP TABLE x` are rejected.
+2. The database is opened with `mode=ro` and `PRAGMA query_only = ON`, so writes fail even if a query slips past step 1. A test covers this.
+3. A SQLite progress handler stops any query after 5 s, which covers runaway recursive CTEs and cross joins.
+
+## Evaluation
+
+[`data/questions.jsonl`](data/questions.jsonl) holds 30 questions (10 easy, 12 medium, 8 hard), each with a gold SQL query. Every gold query was run against the pinned database, and questions with ties at a "top N" cutoff were removed or rewritten so each has exactly one correct result.
+
+**Grading is execution accuracy.** The predicted and gold queries both run, and their results must match:
+
+- numbers are rounded to 2 decimals, so `213` equals `213.0`,
+- row order counts only when the question asks for an order ("highest first"),
+- column order doesn't count, and **extra columns are allowed**. Each gold column must map to a different predicted column with identical values, so returning `ArtistId, Name, Total` when asked for `Name, Total` still passes.
+
+Each run writes `results/<model>.json` (summary plus per-question grades) and `results/trajectories/<model>.jsonl`, which contains every tool call, argument, output, token count, cost and latency. Reading the failed trajectories is the point of the exercise.
+
