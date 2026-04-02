@@ -57,3 +57,31 @@ The SQL comes from a model, so it is treated as untrusted:
 
 Each run writes `results/<model>.json` (summary plus per-question grades) and `results/trajectories/<model>.jsonl`, which contains every tool call, argument, output, token count, cost and latency. Reading the failed trajectories is the point of the exercise.
 
+## Quickstart
+
+```bash
+pip install -e ".[dev]"
+make data                                 # download Chinook (1 MB, pinned commit, SHA-256 checked)
+make test                                 # 57 tests; LLM calls are scripted fakes
+make eval MODEL=oracle                    # harness check, must be 1.000
+
+export OPENAI_API_KEY=...
+make eval MODEL=gpt-4o-mini               # or MODEL=ollama/qwen2.5:7b for a local model
+make report                               # rebuilds results/leaderboard.md
+sql-agent ask "How many customers bought at least one Jazz track?" -v
+```
+
+## Project layout
+
+```
+src/sql_agent/
+  db.py        read-only connection, SQL validation, timeouts, pinned download
+  tools.py     tool specs + dispatcher (errors returned as text)
+  agent.py     the loop, stop conditions, per-step usage/cost/latency
+  evaluate.py  result-set matching, oracle model, metrics, trajectory logging
+  cli.py       sql-agent download | ask | eval | check-gold | report
+data/questions.jsonl   30 questions with gold SQL
+tests/                 agent, tools, safety and grader tests
+```
+
+## Ideas for next steps
