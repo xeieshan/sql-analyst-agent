@@ -85,3 +85,11 @@ tests/                 agent, tools, safety and grader tests
 ```
 
 ## Ideas for next steps
+
+- Self-consistency: sample 3 trajectories and vote on the result set, then measure the accuracy gain against the extra cost.
+- Schema retrieval for bigger databases: embed table descriptions and expose only the top-k tables.
+- Error analysis: label each failed trajectory (wrong join, wrong filter, misread question, gave up) and track the mix over time.
+
+## License
+
+MIT. The Chinook database is © Luis Rocha, also MIT-licensed, and is downloaded at runtime rather than redistributed.
