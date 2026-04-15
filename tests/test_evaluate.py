@@ -93,4 +93,4 @@ def test_oracle_scores_100_percent_on_chinook():
     res = run_eval(CHINOOK, qs, model="oracle", completion_fn=make_oracle(qs))
     assert res["summary"]["execution_accuracy"] == 1.0
 
-# Maintenance pass: 2026-04-07 16:06
+# Maintenance pass: 2026-04-15 10:08
