@@ -155,4 +155,4 @@ class ReadOnlyDB:
         """Fetch every row (used for grading); still validated and time-limited."""
         return self._execute(sql, limit=None)[1]
 
-# Maintenance pass: 2026-04-15 13:41
+# Maintenance pass: 2026-04-16 18:47
