@@ -56,3 +56,52 @@ def cmd_eval(args: argparse.Namespace) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / f"{name}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps(result["summary"], indent=2))
+
+
+def cmd_check_gold(args: argparse.Namespace) -> None:
+    db = ReadOnlyDB(args.db)
+    for q in load_questions(args.questions):
+        rows = db.run_unbounded(q.gold_sql)
+        preview = rows[:3]
+        print(f"{q.qid:>4} {q.difficulty:<6} rows={len(rows):<4} {preview}")
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    rows = [
+        "| Model | Exec. accuracy | Easy | Medium | Hard | LLM calls / q | Tool errors / q | Cost (USD) "
+        "| p50 latency (s) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for path in sorted(Path(args.results_dir).glob("*.json")):
+        r = json.loads(path.read_text(encoding="utf-8"))
+        s = r["summary"]
+        d = s["by_difficulty"]
+        rows.append(
+            f"| {r['model']} | {s['execution_accuracy']:.3f} | {d.get('easy', 0):.2f} | {d.get('medium', 0):.2f} | "
+            f"{d.get('hard', 0):.2f} | {s['mean_llm_calls']:.1f} | {s['mean_tool_errors']:.2f} | "
+            f"{s['total_cost_usd']:.4f} | {s['latency_p50_s']:.2f} |"
+        )
+    table = "\n".join(rows)
+    print(table)
+    if args.out:
+        Path(args.out).write_text(table + "\n", encoding="utf-8")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="sql-agent", description=__doc__)
+    sub = p.add_subparsers(dest="command", required=True)
+
+    s = sub.add_parser("download", help="download the pinned Chinook SQLite database")
+    s.add_argument("--dest", default=DEFAULT_DB)
+    s.set_defaults(func=cmd_download)
+
+    s = sub.add_parser("ask", help="ask one question")
+    s.add_argument("question")
+    s.add_argument("--model", default="gpt-4o-mini")
+    s.add_argument("--db", default=DEFAULT_DB)
+    s.add_argument("--max-steps", type=int, default=12)
+    s.add_argument("-v", "--verbose", action="store_true")
+    s.set_defaults(func=cmd_ask)
+
+    s = sub.add_parser("eval", help="run the benchmark; --model oracle validates the harness")
+    s.add_argument("--model", default="gpt-4o-mini")
