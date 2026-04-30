@@ -44,5 +44,3 @@ def scripted():
         return fn
 
     return factory
-
-# Maintenance pass: 2026-04-02 11:15

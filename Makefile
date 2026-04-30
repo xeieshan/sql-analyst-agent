@@ -20,5 +20,3 @@ eval:
 
 report:
 	sql-agent report
-
-# Maintenance pass: 2026-04-17 16:05

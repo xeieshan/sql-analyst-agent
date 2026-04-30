@@ -31,5 +31,3 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "S", "BLE"]
 ignore = ["S101", "S608"]
-
-# Maintenance pass: 2026-04-10 13:47

@@ -93,5 +93,3 @@ tests/                 agent, tools, safety and grader tests
 ## License
 
 MIT. The Chinook database is © Luis Rocha, also MIT-licensed, and is downloaded at runtime rather than redistributed.
-
-# Maintenance pass: 2026-04-30 18:27

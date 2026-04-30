@@ -198,5 +198,3 @@ class SQLAgent:
             traj.stop_reason = "max_steps"
         traj.wall_time_s = time.perf_counter() - start
         return traj
-
-# Maintenance pass: 2026-04-29 18:35

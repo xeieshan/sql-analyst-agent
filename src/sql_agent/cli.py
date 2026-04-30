@@ -105,3 +105,30 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("eval", help="run the benchmark; --model oracle validates the harness")
     s.add_argument("--model", default="gpt-4o-mini")
+    s.add_argument("--db", default=DEFAULT_DB)
+    s.add_argument("--questions", default=DEFAULT_QUESTIONS)
+    s.add_argument("--max-steps", type=int, default=12)
+    s.add_argument("--limit", type=int, default=0)
+    s.add_argument("--out-dir", default="results")
+    s.set_defaults(func=cmd_eval)
+
+    s = sub.add_parser("check-gold", help="run every gold query and print a preview")
+    s.add_argument("--db", default=DEFAULT_DB)
+    s.add_argument("--questions", default=DEFAULT_QUESTIONS)
+    s.set_defaults(func=cmd_check_gold)
+
+    s = sub.add_parser("report", help="markdown table from results/*.json")
+    s.add_argument("--results-dir", default="results")
+    s.add_argument("--out", default="results/leaderboard.md")
+    s.set_defaults(func=cmd_report)
+    return p
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    args.func(args)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -154,5 +154,3 @@ class ReadOnlyDB:
     def run_unbounded(self, sql: str) -> list[tuple]:
         """Fetch every row (used for grading); still validated and time-limited."""
         return self._execute(sql, limit=None)[1]
-
-# Maintenance pass: 2026-04-20 14:49

@@ -115,5 +115,3 @@ def test_toolbox_clips_long_output(db_path):
     tb = ToolBox(ReadOnlyDB(db_path), max_output_chars=30)
     out = tb.call("describe_table", '{"table": "Album"}')
     assert out.content.endswith("[output clipped]")
-
-# Maintenance pass: 2026-04-20 18:00
